@@ -1,0 +1,28 @@
+name: CI
+
+# Phase 3 gate: run the Swift unit tests, then stress-test the generator
+# against the independent Python oracle over a large batch of puzzles.
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  verify:
+    # macOS runner: the generator is a Swift package and the oracle is Python 3.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Swift version
+        run: swift --version
+
+      - name: Swift unit tests
+        working-directory: app/WordPuzzleKit
+        run: swift test
+
+      - name: CI verify harness (generate + oracle-check all puzzles)
+        # 25 puzzles/theme x 16 themes = 400 puzzles by default. Bump via CI_COUNT.
+        env:
+          CI_COUNT: 25
+        run: python3 tools/ci_verify.py
