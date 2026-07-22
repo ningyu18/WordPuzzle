@@ -1,0 +1,22 @@
+# Build artifacts
+# /build/ = CI harness output (tools/ci_verify.py); .build/ = SwiftPM build dirs
+/build/
+.build/
+DerivedData/
+
+# Xcode / SwiftPM per-user editor state
+**/xcuserdata/
+
+# Generated sample puzzles (regenerable via `swift run puzzlegen`)
+/samples/
+
+# OCR dev binaries (large; not needed to build the app)
+tools/ocr/*.png
+tools/ocr/*.PNG
+tools/ocr/*.jpeg
+tools/ocr/*.JPEG
+tools/ocr/dictionaries/
+
+# Python
+__pycache__/
+*.pyc
