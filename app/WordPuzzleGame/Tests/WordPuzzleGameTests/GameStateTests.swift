@@ -154,6 +154,57 @@ import WordPuzzleKit
     }
 }
 
+@Suite struct GameStateRevealAllTests {
+    /// CAT horizontal at row 0, DOG vertical at col 0 (shares C at (0,0)).
+    func makePuzzle() -> Puzzle {
+        var grid = Grid(size: 3)
+        grid[Cell(0,0)] = "C"; grid[Cell(0,1)] = "A"; grid[Cell(0,2)] = "T"
+        grid[Cell(1,0)] = "O"; grid[Cell(2,0)] = "G"
+        let cat = Placement(word: "CAT", start: Cell(0,0), direction: Direction(0,1))
+        let dog = Placement(word: "DOG", start: Cell(0,0), direction: Direction(1,0))
+        return Puzzle(theme: "TEST", grid: grid, wordList: ["CAT", "DOG"],
+                      solution: [cat, dog], seed: 0)
+    }
+
+    @Test func inactiveByDefault() {
+        let g = GameState(puzzle: makePuzzle())
+        #expect(!g.revealAllActive)
+        #expect(g.revealedPlacements.isEmpty)
+    }
+
+    @Test func showRevealsAllUnfoundPlacements() {
+        let g = GameState(puzzle: makePuzzle())
+        g.showAllAnswers()
+        #expect(g.revealAllActive)
+        #expect(Set(g.revealedPlacements.map { $0.word }) == ["CAT", "DOG"])
+    }
+
+    @Test func revealIsNonDestructive() {
+        let g = GameState(puzzle: makePuzzle())
+        g.showAllAnswers()
+        // Peeking must not mark words found or complete the Puzzle.
+        #expect(g.found.isEmpty)
+        #expect(!g.isComplete)
+        #expect(g.unfoundWords.count == 2)
+    }
+
+    @Test func hideClearsReveal() {
+        let g = GameState(puzzle: makePuzzle())
+        g.showAllAnswers()
+        g.hideAllAnswers()
+        #expect(!g.revealAllActive)
+        #expect(g.revealedPlacements.isEmpty)
+    }
+
+    @Test func revealExcludesFoundWords() {
+        let g = GameState(puzzle: makePuzzle())
+        g.beginSelection(at: Cell(0,0)); g.updateSelection(toward: Cell(0,2))
+        g.endSelection() // find CAT
+        g.showAllAnswers()
+        #expect(g.revealedPlacements.map { $0.word } == ["DOG"])
+    }
+}
+
 @Suite struct PuzzleStreamTests {
     @Test func producesVaryingPuzzlesWithIncrementingSeeds() throws {
         let catalog = try WordCatalog.loadBundled()

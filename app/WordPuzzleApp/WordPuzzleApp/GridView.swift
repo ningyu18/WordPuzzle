@@ -68,6 +68,13 @@ struct GridView: View {
                 .stroke(Color.yellow, style: StrokeStyle(
                     lineWidth: 3, lineCap: .round, dash: [6, 4]))
         }
+        // Admin reveal-all peek: dashed blue outline over every unfound word,
+        // distinct from the yellow single Hint. Non-destructive overlay.
+        ForEach(Array(game.revealedPlacements.enumerated()), id: \.offset) { _, placement in
+            barPath(for: placement.cells, cell: cell)
+                .stroke(Color.blue, style: StrokeStyle(
+                    lineWidth: 3, lineCap: .round, dash: [6, 4]))
+        }
     }
 
     /// A rounded capsule bar covering the run of `cells`.

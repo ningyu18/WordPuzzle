@@ -33,6 +33,9 @@ struct PuzzleView: View {
                 MuteButton()
             }
             ToolbarItem(placement: .topBarTrailing) {
+                RevealAllButton(game: game)
+            }
+            ToolbarItem(placement: .topBarTrailing) {
                 HintButton(game: game)
             }
         }
@@ -132,6 +135,33 @@ struct HintButton: View {
             Label("\(game.hintsRemaining)", systemImage: "lightbulb")
         }
         .disabled(game.hintsRemaining == 0 || game.isComplete)
+    }
+}
+
+/// Admin "reveal all" peek: shows every unfound word's location on the Grid,
+/// gated by device authentication (Face ID / Touch ID / passcode). Turning it
+/// on requires auth each time; turning it off is free. Non-destructive — it
+/// never marks words found or completes the Puzzle.
+struct RevealAllButton: View {
+    let game: GameState
+
+    var body: some View {
+        Button {
+            if game.revealAllActive {
+                game.hideAllAnswers()
+            } else {
+                Task {
+                    if await AdminAuth.authenticate() {
+                        game.showAllAnswers()
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: game.revealAllActive ? "eye.slash" : "eye")
+        }
+        .disabled(game.isComplete || game.unfoundWords.isEmpty)
+        .accessibilityLabel(game.revealAllActive
+                            ? "Hide all answers" : "Reveal all answers")
     }
 }
 

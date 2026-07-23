@@ -24,6 +24,10 @@ public final class GameState {
     public private(set) var hintsRemaining: Int
     /// A Hint currently being shown (the revealed Placement), if any.
     public private(set) var hintPlacement: Placement?
+    /// Admin "reveal all" peek: when true, every unfound word's location is
+    /// shown on the Grid. Non-destructive — it never marks words found or
+    /// completes the Puzzle, and is per-Puzzle (each Puzzle gets a fresh state).
+    public private(set) var revealAllActive: Bool = false
 
     public let maxHints: Int
 
@@ -134,5 +138,26 @@ public final class GameState {
     /// Dismiss the currently shown Hint highlight.
     public func clearHint() {
         hintPlacement = nil
+    }
+
+    // MARK: - Admin reveal-all (non-destructive peek)
+
+    /// Placements of all unfound Target Words when the reveal-all peek is
+    /// active; empty otherwise. Reuses `unfoundWords`/`isFound`, so found words
+    /// are excluded and the Word List/completion are untouched.
+    public var revealedPlacements: [Placement] {
+        guard revealAllActive else { return [] }
+        let unfound = Set(unfoundWords)
+        return puzzle.solution.filter { unfound.contains($0.word) }
+    }
+
+    /// Turn on the reveal-all peek (callers gate this behind device auth).
+    public func showAllAnswers() {
+        revealAllActive = true
+    }
+
+    /// Turn off the reveal-all peek.
+    public func hideAllAnswers() {
+        revealAllActive = false
     }
 }
