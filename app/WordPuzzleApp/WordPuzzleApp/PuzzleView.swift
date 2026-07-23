@@ -30,11 +30,17 @@ struct PuzzleView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+                MuteButton()
+            }
+            ToolbarItem(placement: .topBarTrailing) {
                 HintButton(game: game)
             }
         }
         .onChange(of: game.isComplete) { _, complete in
-            if complete { showComplete = true }
+            if complete {
+                showComplete = true
+                SoundEngine.shared.playPuzzleComplete()
+            }
         }
         .overlay {
             if let error = controller.generationError {
@@ -119,10 +125,27 @@ struct HintButton: View {
 
     var body: some View {
         Button {
-            game.useHint()
+            if game.useHint() != nil {
+                SoundEngine.shared.playHint()
+            }
         } label: {
             Label("\(game.hintsRemaining)", systemImage: "lightbulb")
         }
         .disabled(game.hintsRemaining == 0 || game.isComplete)
+    }
+}
+
+/// Toggles the synthesized sound cues; state is persisted in SoundEngine.
+struct MuteButton: View {
+    @State private var muted = SoundEngine.shared.isMuted
+
+    var body: some View {
+        Button {
+            muted.toggle()
+            SoundEngine.shared.isMuted = muted
+        } label: {
+            Image(systemName: muted ? "speaker.slash" : "speaker.wave.2")
+        }
+        .accessibilityLabel(muted ? "Unmute sounds" : "Mute sounds")
     }
 }

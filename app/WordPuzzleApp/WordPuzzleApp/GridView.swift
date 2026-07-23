@@ -102,11 +102,30 @@ struct GridView: View {
                     game.beginSelection(at: start)
                 }
                 if let finger {
+                    let before = game.selection?.cells.count ?? 0
                     game.updateSelection(toward: finger)
+                    let after = game.selection?.cells.count ?? 0
+                    // Optional per-cell tick as the Trace grows (off by default).
+                    if SoundEngine.shared.cellTickEnabled, after > before {
+                        SoundEngine.shared.playCellTick(step: after - 1)
+                    }
                 }
             }
             .onEnded { _ in
-                game.endSelection()
+                // Capture the drag length before ending, since endSelection()
+                // clears the live Selection.
+                let wasRealAttempt = (game.selection?.cells.count ?? 0) >= 2
+                // A non-nil return means a Target Word matched; nil means the
+                // drag lined up with nothing.
+                if game.endSelection() != nil {
+                    // Combo index: the just-found word is the last in `found`.
+                    let combo = max(0, game.found.count - 1)
+                    SoundEngine.shared.playWordFound(comboIndex: combo)
+                } else if wasRealAttempt {
+                    // Only sound a no-match on an actual dragged run (2+ cells),
+                    // so an incidental tap on a single cell stays silent.
+                    SoundEngine.shared.playNoMatch()
+                }
             }
     }
 

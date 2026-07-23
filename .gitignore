@@ -20,3 +20,4 @@ tools/ocr/dictionaries/
 # Python
 __pycache__/
 *.pyc
+.DS_Store
