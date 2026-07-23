@@ -8,11 +8,6 @@ import WordPuzzleGame
 struct GridView: View {
     let game: GameState
 
-    // Colors for successive found words, cycled by colorSlot.
-    private let foundColors: [Color] = [
-        .green, .orange, .purple, .pink, .teal, .indigo, .brown,
-    ]
-
     var body: some View {
         GeometryReader { geo in
             let size = game.puzzle.grid.size
@@ -42,15 +37,17 @@ struct GridView: View {
                 }
             }
             .frame(width: side, height: side)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.secondarySystemBackground))
-            )
             .contentShape(Rectangle())
             .gesture(traceGesture(cell: cell, size: size))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .aspectRatio(1, contentMode: .fit)
+        // Size the grid relative to the screen width so it scales across
+        // devices (iPhone vs iPad): most of the width, capped so cells stay a
+        // comfortable finger size on large iPads.
+        .containerRelativeFrame(.horizontal) { width, _ in
+            min(width * 0.9, 640)
+        }
     }
 
     // MARK: - Highlights
@@ -60,7 +57,7 @@ struct GridView: View {
         // Found words: colored bars kept on the Grid.
         ForEach(Array(game.found.enumerated()), id: \.offset) { _, fw in
             barPath(for: fw.placement.cells, cell: cell)
-                .fill(foundColors[fw.colorSlot % foundColors.count].opacity(0.35))
+                .fill(PuzzlePalette.color(slot: fw.colorSlot).opacity(0.5))
         }
         // Active Hint: dashed outline over the revealed Placement.
         if let hint = game.hintPlacement {

@@ -81,44 +81,68 @@ struct PreviewBanner: View {
     }
 }
 
-/// The Word List: unfound words show blank circles (one per letter), found
-/// words show their full letters in a distinct color.
+/// The Word List: unfound words show large open circles (one per letter),
+/// found words show per-letter filled circles colored to match the word's bar
+/// in the Grid (via its colorSlot).
 struct WordListView: View {
     let game: GameState
 
-    private let columns = [GridItem(.adaptive(minimum: 90), spacing: 8)]
+    private let columns = [GridItem(.adaptive(minimum: 170), spacing: 20)]
 
     var body: some View {
-        LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
+        LazyVGrid(columns: columns, alignment: .center, spacing: 14) {
             ForEach(game.puzzle.wordList, id: \.self) { word in
-                WordChip(word: word, found: game.isFound(word))
+                WordChip(word: word, foundColor: foundColor(for: word))
             }
         }
         .padding(.horizontal)
     }
+
+    /// The word's Grid color if found, else nil (still to be found).
+    private func foundColor(for word: String) -> Color? {
+        guard let fw = game.found.first(where: { $0.word == word }) else {
+            return nil
+        }
+        return PuzzlePalette.color(slot: fw.colorSlot)
+    }
 }
 
+/// One Word List entry: a row of circles, one per letter. Unfound circles are
+/// large open outlines; found circles are filled in the word's color with the
+/// letter inside — mirroring the reference app.
 struct WordChip: View {
     let word: String
-    let found: Bool
+    /// Non-nil when the word is found (its Grid bar color).
+    let foundColor: Color?
+
+    private let diameter: CGFloat = 15
 
     var body: some View {
-        Group {
-            if found {
-                Text(word)
-                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                    .foregroundStyle(Color.green)
-            } else {
-                HStack(spacing: 3) {
-                    ForEach(0..<word.count, id: \.self) { _ in
-                        Circle()
-                            .strokeBorder(Color.secondary.opacity(0.5), lineWidth: 1.5)
-                            .frame(width: 9, height: 9)
-                    }
-                }
+        HStack(spacing: 3) {
+            ForEach(Array(word.enumerated()), id: \.offset) { _, letter in
+                letterCircle(letter)
             }
         }
-        .frame(height: 20)
+        .frame(height: diameter)
+    }
+
+    @ViewBuilder
+    private func letterCircle(_ letter: Character) -> some View {
+        if let color = foundColor {
+            Circle()
+                .fill(color)
+                .frame(width: diameter, height: diameter)
+                .overlay(
+                    Text(String(letter))
+                        .font(.system(size: diameter * 0.6,
+                                      weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                )
+        } else {
+            Circle()
+                .strokeBorder(Color.secondary.opacity(0.5), lineWidth: 2)
+                .frame(width: diameter, height: diameter)
+        }
     }
 }
 
